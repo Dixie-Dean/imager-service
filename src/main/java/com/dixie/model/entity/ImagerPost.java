@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @ToString
 @Entity
 @Table(schema = "pastebin", name = "snippets")
-public class Snippet {
+public class ImagerPost {
 
     @Id
     private String id;

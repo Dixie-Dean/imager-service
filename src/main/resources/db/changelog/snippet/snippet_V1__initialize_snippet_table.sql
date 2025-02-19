@@ -1,4 +1,4 @@
-create table pastebin.snippets (id varchar(255) not null,
+create table pastebin.imagerPosts (id varchar(255) not null,
                                 creation_time timestamp(6),
                                 expiration_time timestamp(6),
                                 author varchar(255),

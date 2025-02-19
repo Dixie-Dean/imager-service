@@ -9,6 +9,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class SnippetUpdateDTO {
+public class ImagerPostUploadInfo {
     private String body;
+    private long ttl;
 }

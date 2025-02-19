@@ -6,10 +6,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
-public class PastebinApplication {
+public class ImagerServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(PastebinApplication.class, args);
+        SpringApplication.run(ImagerServiceApplication.class, args);
     }
 
 }
