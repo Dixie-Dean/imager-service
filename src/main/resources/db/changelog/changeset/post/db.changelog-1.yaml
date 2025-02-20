@@ -1,0 +1,34 @@
+databaseChangeLog:
+- changeSet:
+    id: 1740038873835-1
+    author: Dmitry Sokolov
+    changes:
+    - createTable:
+        columns:
+        - column:
+            name: creation_time
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: expiration_time
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: imager_post_pkey
+            name: id
+            type: VARCHAR(255)
+        - column:
+            name: link
+            type: VARCHAR(255)
+        - column:
+            name: message
+            type: VARCHAR(255)
+        - column:
+            name: user
+            type: VARCHAR(255)
+        - column:
+            name: image
+            type: BYTEA
+        tableName: imager_post
+

@@ -11,25 +11,27 @@ import java.time.LocalDateTime;
 @Setter
 @ToString
 @Entity
-@Table(schema = "pastebin", name = "snippets")
+@Table(schema = "public", name = "imager_post")
 public class ImagerPost {
 
     @Id
     private String id;
 
-//    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-//    @JoinColumn(name = "author", referencedColumnName = "email")
-//    private PastebinUser author;
+    @Column(name = "\"user\"")
+    private String user;
 
-    @Column(name = "body")
-    private String body;
+    @Column(name = "image")
+    private byte[] image;
+
+    @Column(name = "message")
+    private String message;
 
     @Column(name = "creation_time")
-    private LocalDateTime creationDateTime;
+    private LocalDateTime creationTime;
 
     @Column(name = "expiration_time")
-    private LocalDateTime expirationDateTime;
+    private LocalDateTime expirationTime;
 
-    @Column(name = "link", unique = true)
+    @Column(name = "link")
     private String link;
 }
