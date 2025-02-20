@@ -13,9 +13,10 @@ import java.time.LocalDateTime;
 @Setter
 public class ImagerPostDTO {
     private String id;
-    private String author;
-    private String body;
-    private LocalDateTime creationDateTime;
-    private LocalDateTime expirationDateTime;
+    private String user;
+    private byte[] image;
+    private String message;
+    private LocalDateTime creationTime;
+    private LocalDateTime expirationTime;
     private String link;
 }

@@ -1,22 +1,22 @@
 package com.dixie.service;
 
-import com.dixie.model.dto.ImagerPostUploadInfo;
+import com.dixie.exception.ImagerPostNotFoundException;
 import com.dixie.model.dto.ImagerPostDTO;
-import com.dixie.model.dto.ImagerPostUpdateInfo;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.net.MalformedURLException;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 
 public interface PostService {
 
-    String uploadPost(ImagerPostUploadInfo imagerPostUploadInfo) throws URISyntaxException, MalformedURLException;
+    String uploadImagerPost(String imagerPostUploadInfo, MultipartFile image) throws URISyntaxException, IOException;
 
-    List<ImagerPostDTO> getPosts();
+    ImagerPostDTO getImagerPost(String id) throws ImagerPostNotFoundException;
 
-    ImagerPostDTO getPost(String id);
+    List<ImagerPostDTO> getImagerPostsByUsername(String username) throws ImagerPostNotFoundException;
 
-    String editPost(String id, ImagerPostUpdateInfo imagerPostUpdateInfo);
+    ImagerPostDTO editImagerPost(String id, String payloadJson, MultipartFile image) throws IOException, URISyntaxException, ImagerPostNotFoundException;
 
-    String deletePost(String id);
+    String deleteImagerPost(String id) throws ImagerPostNotFoundException;
 }
