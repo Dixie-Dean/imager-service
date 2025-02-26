@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequiredArgsConstructor
@@ -22,7 +23,7 @@ public class ImagerPostController {
 
     @PostMapping(value = "/upload")
     public ResponseEntity<String> uploadImagerPost(@RequestPart("data") String payloadJson,
-                                                   @RequestPart("image") MultipartFile image) throws URISyntaxException, IOException {
+                                                   @RequestPart("image") MultipartFile image) throws URISyntaxException, IOException, ExecutionException, InterruptedException {
         var response = postService.uploadImagerPost(payloadJson, image);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }

@@ -24,6 +24,7 @@ public class ImagerPost {
     @Column(name = "\"user\"")
     private String user;
 
+    @ToString.Exclude
     @Column(name = "image")
     private byte[] image;
 
