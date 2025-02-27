@@ -33,16 +33,17 @@ import java.util.concurrent.ExecutionException;
 @RequiredArgsConstructor
 public class ImagerPostService implements PostService {
 
-    private final static String TOPIC_NAME = "imager-service";
+    private final static String SEND_TO_TOPIC_NAME = "imager-service";
+    private final static String LISTEN_TO_TOPIC_NAME = "id-service";
     private final static String MESSAGE = "request-id";
     private final ImagerPostRepository imagerPostRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ImagerPostMapper mapper;
     private CompletableFuture<String> responseFromIdService;
 
-    @KafkaListener(topics = "id-service", groupId = "imager")
+    @KafkaListener(topics = LISTEN_TO_TOPIC_NAME, groupId = "imager")
     public void getUniqueId(String id) {
-        log.debug("GetUniqueID | ID:{}", id);
+        log.info("GetUniqueID | ID:{}, topic:{}", id, LISTEN_TO_TOPIC_NAME);
         responseFromIdService.complete(id);
     }
 
@@ -59,8 +60,8 @@ public class ImagerPostService implements PostService {
                                        @NonNull MultipartFile image) throws IOException, URISyntaxException, ExecutionException, InterruptedException {
 
         responseFromIdService = new CompletableFuture<>();
-        kafkaTemplate.send(TOPIC_NAME, MESSAGE);
-        log.info("BuildImagerPost | Request to ID-Service, topic:{}, message:{}", TOPIC_NAME, MESSAGE);
+        kafkaTemplate.send(SEND_TO_TOPIC_NAME, MESSAGE);
+        log.info("BuildImagerPost | Request to ID-Service, topic:{}, message:{}", SEND_TO_TOPIC_NAME, MESSAGE);
 
         var imagerPostUploadData = parseFromJson(imagerPostDataJson);
         var creationDateTime = LocalDateTime.now();
