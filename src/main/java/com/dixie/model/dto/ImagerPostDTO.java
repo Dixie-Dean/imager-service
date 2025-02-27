@@ -1,9 +1,6 @@
 package com.dixie.model.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -11,9 +8,11 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Getter
 @Setter
+@ToString
 public class ImagerPostDTO {
     private String id;
     private String user;
+    @ToString.Exclude
     private byte[] image;
     private String message;
     private LocalDateTime creationTime;

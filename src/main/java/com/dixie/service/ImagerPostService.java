@@ -10,8 +10,6 @@ import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.utils.URIBuilder;
-import org.slf4j.Marker;
-import org.slf4j.MarkerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.lang.NonNull;
@@ -35,9 +33,8 @@ import java.util.concurrent.ExecutionException;
 @RequiredArgsConstructor
 public class ImagerPostService implements PostService {
 
+    private final static String TOPIC_NAME = "imager-service";
     private final static String MESSAGE = "request-id";
-    private final Marker kafkaMarker = MarkerFactory.getMarker("KAFKA");
-    private final Marker serviceMarker = MarkerFactory.getMarker("SERVICE");
     private final ImagerPostRepository imagerPostRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ImagerPostMapper mapper;
@@ -45,15 +42,15 @@ public class ImagerPostService implements PostService {
 
     @KafkaListener(topics = "id-service", groupId = "imager")
     public void getUniqueId(String id) {
-        log.info(kafkaMarker, "Received id:{}", id);
+        log.debug("GetUniqueID | ID:{}", id);
         responseFromIdService.complete(id);
     }
 
     @Override
     public String uploadImagerPost(String imagerPostUploadDataJson, MultipartFile image) throws URISyntaxException, IOException, ExecutionException, InterruptedException {
-        log.info(serviceMarker, "Received JSON:{}", imagerPostUploadDataJson);
+        log.info("UploadImagerPost | JSON:{}, Image:{}", imagerPostUploadDataJson, image);
         var imagerPost = buildImagerPost(imagerPostUploadDataJson, image);
-        log.info(serviceMarker, "ImagerPost to persist:{}", imagerPost);
+        log.info("ImagerPost to persist:{}", imagerPost);
         imagerPostRepository.saveImagerPost(imagerPost);
         return "Post saved successfully! [ID:%s]".formatted(imagerPost.getId());
     }
@@ -62,13 +59,12 @@ public class ImagerPostService implements PostService {
                                        @NonNull MultipartFile image) throws IOException, URISyntaxException, ExecutionException, InterruptedException {
 
         responseFromIdService = new CompletableFuture<>();
-        kafkaTemplate.send("imager-service", MESSAGE);
-        log.info(kafkaMarker, "Request to ID-Service, topic:{}, message:{}", "imager-service", MESSAGE);
+        kafkaTemplate.send(TOPIC_NAME, MESSAGE);
+        log.info("BuildImagerPost | Request to ID-Service, topic:{}, message:{}", TOPIC_NAME, MESSAGE);
 
         var imagerPostUploadData = parseFromJson(imagerPostDataJson);
         var creationDateTime = LocalDateTime.now();
         var expirationDateTime = creationDateTime.plusMinutes(imagerPostUploadData.getTtl());
-
         var postID = responseFromIdService.get();
         var url = buildURL(postID);
 
@@ -99,26 +95,34 @@ public class ImagerPostService implements PostService {
 
     @Override
     public ImagerPostDTO getImagerPost(String id) throws ImagerPostNotFoundException {
-        var imagerPost = imagerPostRepository.getImagerPost(id);
-        return mapper.toDTO(imagerPost.orElseThrow(ImagerPostNotFoundException::new));
+        log.info("GetImagerPost | ID:{}", id);
+        var optional = imagerPostRepository.getImagerPost(id);
+        var imagerPost = mapper.toDTO(optional.orElseThrow(ImagerPostNotFoundException::new));
+        log.info("GetImagerPost | ImagerPost:{}", imagerPost);
+        return imagerPost;
     }
 
     @Override
     public List<ImagerPostDTO> getImagerPostsByUsername(String username) throws ImagerPostNotFoundException {
+        log.info("GetImagerPostsByUsername | Username:{}", username);
         var optional = imagerPostRepository.getImagerPostsByUsername(username);
-        return optional
+        var posts = optional
                 .orElseThrow(ImagerPostNotFoundException::new)
                 .stream().map(mapper::toDTO).toList();
+        log.info("GetImagerPostsByUsername | DTOs:{}", posts);
+        return posts;
     }
 
     @Override
     public ImagerPostDTO editImagerPost(@NonNull String id,
                                         @Nullable String payloadJson,
                                         @Nullable MultipartFile image) throws ImagerPostNotFoundException, IOException {
+        log.info("EditImagerPost | ID:{}, JSON:{}, Image:{}", id, payloadJson, image);
         var payload = parseFromJson(payloadJson);
         var entity = imagerPostRepository.getImagerPost(id)
                 .orElseThrow(ImagerPostNotFoundException::new);
         var updatedEntity = updateEntity(entity, payload, image);
+        log.info("EditImagerPost | Old:{}, Updated:{}", entity, updatedEntity);
         var optional = imagerPostRepository.editImagerPost(updatedEntity);
         return optional
                 .map(mapper::toDTO)
@@ -143,8 +147,10 @@ public class ImagerPostService implements PostService {
 
     @Override
     public String deleteImagerPost(String id) throws ImagerPostNotFoundException {
+        log.info("DeleteImagerPost | ID:{}", id);
         var imagerPost = imagerPostRepository.getImagerPost(id)
                 .orElseThrow(ImagerPostNotFoundException::new);
+        log.info("DeleteImagerPost | ImagerPost:{}", imagerPost);
         imagerPostRepository.deleteImagerPost(imagerPost);
         return "Post removed successfully [ID:%s]".formatted(id);
     }
