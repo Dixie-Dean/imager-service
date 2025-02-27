@@ -16,3 +16,11 @@ spring:
   servlet:
     multipart:
       enabled: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: imager
+
+server:
+  port: 8080
