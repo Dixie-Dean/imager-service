@@ -1,6 +1,7 @@
 package com.dixie.service;
 
 import com.dixie.exception.ImagerPostNotFoundException;
+import com.dixie.exception.ImagerPostValidationException;
 import com.dixie.mapper.ImagerPostMapper;
 import com.dixie.model.dto.ImagerPostDTO;
 import com.dixie.model.dto.ImagerPostUploadData;
@@ -10,12 +11,14 @@ import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.utils.URIBuilder;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.Validator;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -27,18 +30,23 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ImagerPostService implements PostService {
 
-    private final static String SEND_TO_TOPIC_NAME = "imager-service";
-    private final static String LISTEN_TO_TOPIC_NAME = "id-service";
+    private final static String SEND_TO_TOPIC_NAME = "request-id-topic";
+    private final static String LISTEN_TO_TOPIC_NAME = "provide-id-topic";
     private final static String MESSAGE = "request-id";
+
     private final ImagerPostRepository imagerPostRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ImagerPostMapper mapper;
+    private final Gson jsonParser = new Gson();
+    private final Validator validator;
+
     private CompletableFuture<String> responseFromIdService;
 
     @KafkaListener(topics = LISTEN_TO_TOPIC_NAME, groupId = "imager")
@@ -71,7 +79,7 @@ public class ImagerPostService implements PostService {
 
         return ImagerPost.builder()
                 .id(postID)
-                .user("STUB-USER") //TODO remove stub
+                .user(imagerPostUploadData.getEmail())
                 .image(image.getBytes())
                 .message(imagerPostUploadData.getMessage())
                 .creationTime(creationDateTime)
@@ -81,7 +89,15 @@ public class ImagerPostService implements PostService {
     }
 
     private ImagerPostUploadData parseFromJson(String json) {
-        return new Gson().fromJson(json, ImagerPostUploadData.class);
+        var imagerPostUploadData = jsonParser.fromJson(json, ImagerPostUploadData.class);
+        var errors = validator.validateObject(imagerPostUploadData).getAllErrors();
+        if (!errors.isEmpty()) {
+            String message = errors.stream()
+                    .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                    .collect(Collectors.joining("\n"));
+            throw new ImagerPostValidationException(message);
+        }
+        return imagerPostUploadData;
     }
 
     private String buildURL(String snippetID) throws URISyntaxException, MalformedURLException {
@@ -135,8 +151,8 @@ public class ImagerPostService implements PostService {
                                     @Nullable MultipartFile image) throws IOException {
 
         var message = (uploadData != null) ? uploadData.getMessage() : null;
-        var ttl = (uploadData != null) ? uploadData.getTtl() : null;
-        var expirationTime = (ttl != null) ? entity.getCreationTime().plusMinutes(ttl) : null;
+        var ttl = (uploadData != null) ? uploadData.getTtl() : 0;
+        var expirationTime = (ttl != 0) ? entity.getCreationTime().plusMinutes(ttl) : null;
         var imageBytes = (image != null) ? image.getBytes() : null;
 
         entity.setMessage(Objects.requireNonNullElseGet(message, entity::getMessage));

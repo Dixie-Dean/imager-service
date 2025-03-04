@@ -41,15 +41,16 @@ public class ImagerPostController {
     }
 
     @PatchMapping("/edit")
-    public ResponseEntity<ImagerPostDTO> editPost(@RequestPart("id") String id,
-                                                  @RequestPart(value = "data", required = false) String payloadJson,
-                                                  @RequestPart(value = "image", required = false) MultipartFile image) throws ImagerPostNotFoundException, IOException, URISyntaxException {
+    public ResponseEntity<ImagerPostDTO> editImagerPost(@RequestPart("id") String id,
+                                                        @RequestPart(value = "data", required = false) String payloadJson,
+                                                        @RequestPart(value = "image", required = false) MultipartFile image) throws ImagerPostNotFoundException, IOException, URISyntaxException {
         var imagerPost = postService.editImagerPost(id, payloadJson, image);
         return new ResponseEntity<>(imagerPost, HttpStatus.OK);
     }
 
     @DeleteMapping("/delete")
-    public String delete(@RequestParam String id) throws ImagerPostNotFoundException {
-        return postService.deleteImagerPost(id);
+    public ResponseEntity<String> deleteImagerPost(@RequestParam String id) throws ImagerPostNotFoundException {
+        var response = postService.deleteImagerPost(id);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
