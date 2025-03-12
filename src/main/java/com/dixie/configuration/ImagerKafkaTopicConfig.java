@@ -9,8 +9,12 @@ import org.springframework.kafka.config.TopicBuilder;
 public class ImagerKafkaTopicConfig {
 
     @Bean
-    public NewTopic imagerServiceTopic() {
-        return TopicBuilder.name("imager-service").partitions(3).build();
+    public NewTopic requestIdTopic() {
+        return TopicBuilder.name("request-id-topic").partitions(3).build();
     }
 
+    @Bean
+    public NewTopic imagerResponseTopic() {
+        return TopicBuilder.name("imager-response-topic").partitions(3).build();
+    }
 }
