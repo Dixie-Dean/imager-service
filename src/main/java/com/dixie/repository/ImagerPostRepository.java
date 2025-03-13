@@ -3,8 +3,6 @@ package com.dixie.repository;
 import com.dixie.model.entity.ImagerPost;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.Query;
-import jakarta.persistence.TypedQuery;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -29,10 +27,10 @@ public class ImagerPostRepository {
         return Optional.ofNullable(imagerPost);
     }
 
-    public Optional<List<ImagerPost>> getImagerPostsByUsername(String user) {
+    public Optional<List<ImagerPost>> getImagerPostsByEmail(String userEmail) {
         var query = entityManager.createQuery(
                 "SELECT i FROM ImagerPost i WHERE i.user = :user", ImagerPost.class);
-        query.setParameter("user", user);
+        query.setParameter("user", userEmail);
         var list = query.getResultList();
         return Optional.ofNullable(list);
     }

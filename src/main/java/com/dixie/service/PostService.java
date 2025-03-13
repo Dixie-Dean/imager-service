@@ -15,7 +15,7 @@ public interface PostService {
 
     ImagerPostDTO getImagerPost(String id) throws ImagerPostNotFoundException;
 
-    List<ImagerPostDTO> getImagerPostsByUsername(String username) throws ImagerPostNotFoundException;
+    List<ImagerPostDTO> getImagerPostsByEmail(String email) throws ImagerPostNotFoundException;
 
     ImagerPostDTO editImagerPost(String id, String payloadJson, MultipartFile image) throws IOException, URISyntaxException, ImagerPostNotFoundException;
 

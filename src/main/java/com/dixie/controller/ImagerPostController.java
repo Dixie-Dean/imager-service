@@ -35,8 +35,8 @@ public class ImagerPostController {
     }
 
     @GetMapping("/posts")
-    public ResponseEntity<List<ImagerPostDTO>> getImagerPostsByUsername(@RequestParam String username) throws ImagerPostNotFoundException {
-        var imagerPosts = postService.getImagerPostsByUsername(username);
+    public ResponseEntity<List<ImagerPostDTO>> getImagerPostsByEmail(@RequestParam String email) throws ImagerPostNotFoundException {
+        var imagerPosts = postService.getImagerPostsByEmail(email);
         return new ResponseEntity<>(imagerPosts, HttpStatus.OK);
     }
 

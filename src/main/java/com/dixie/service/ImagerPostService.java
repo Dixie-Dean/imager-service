@@ -120,13 +120,13 @@ public class ImagerPostService implements PostService {
     }
 
     @Override
-    public List<ImagerPostDTO> getImagerPostsByUsername(String username) throws ImagerPostNotFoundException {
-        log.info("GetImagerPostsByUsername | Username:{}", username);
-        var optional = imagerPostRepository.getImagerPostsByUsername(username);
+    public List<ImagerPostDTO> getImagerPostsByEmail(String email) throws ImagerPostNotFoundException {
+        log.info("GetImagerPostsByEmail | Username:{}", email);
+        var optional = imagerPostRepository.getImagerPostsByEmail(email);
         var posts = optional
                 .orElseThrow(ImagerPostNotFoundException::new)
                 .stream().map(mapper::toDTO).toList();
-        log.info("GetImagerPostsByUsername | DTOs:{}", posts);
+        log.info("GetImagerPostsByEmail | DTOs:{}", posts);
         return posts;
     }
 
