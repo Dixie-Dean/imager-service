@@ -23,7 +23,7 @@ public class ImagerPostRepository {
     }
 
     public Optional<ImagerPost> getImagerPost(String id) {
-        ImagerPost imagerPost = entityManager.find(ImagerPost.class, id);
+        var imagerPost = entityManager.find(ImagerPost.class, id);
         return Optional.ofNullable(imagerPost);
     }
 
@@ -32,12 +32,12 @@ public class ImagerPostRepository {
                 "SELECT i FROM ImagerPost i WHERE i.user = :user", ImagerPost.class);
         query.setParameter("user", userEmail);
         var list = query.getResultList();
-        return Optional.ofNullable(list);
+        return list.isEmpty() ? Optional.empty() : Optional.of(list);
     }
 
     @Transactional
     public Optional<ImagerPost> editImagerPost(ImagerPost updatedImagerPost) {
-        ImagerPost mergedImagerPost = entityManager.merge(updatedImagerPost);
+        var mergedImagerPost = entityManager.merge(updatedImagerPost);
         return Optional.ofNullable(mergedImagerPost);
     }
 
