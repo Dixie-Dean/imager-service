@@ -95,6 +95,7 @@ public class ImagerPostService implements PostService {
             String message = errors.stream()
                     .map(DefaultMessageSourceResolvable::getDefaultMessage)
                     .collect(Collectors.joining("\n"));
+            log.error("ParseFromJson | message:{}", message);
             throw new ImagerPostValidationException(message);
         }
         return imagerPostUploadData;
