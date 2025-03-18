@@ -37,9 +37,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ImagerPostService implements PostService {
 
-    private final static String SEND_TO_TOPIC_NAME = "request-id-topic";
-    private final static String LISTEN_TO_TOPIC_NAME = "provide-id-topic";
-    private final static String MESSAGE = "request-id";
+    private static final String SEND_TO_TOPIC_NAME = "request-id-topic";
+    private static final String LISTEN_TO_TOPIC_NAME = "provide-id-topic";
+    private static final String MESSAGE = "request-id";
 
     private final ImagerPostRepository imagerPostRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
