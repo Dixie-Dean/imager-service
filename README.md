@@ -1,94 +1,83 @@
 # Imager Service
 
+The Imager Service is a web service that allows users to upload, retrieve, edit, and delete images and associated posts.
+
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/Dixie-Dean/imager-service/actions)
+
 ## Installation
 
-1. Clone the repository:
-```
+Clone the repository:
+```bash
 git clone https://github.com/your-username/imager-service.git
 ```
-
-2. Navigate to the project directory:
-```
+Navigate to the project directory:
+```bash
 cd imager-service
 ```
-
-3. Build the project using Maven:
-```
+Build the project using Maven:
+```bash
 mvn clean install
 ```
-
-4. Run the application:
-```
+Run the application:
+```bash
 java -jar target/imager-service.jar
 ```
 
-## Usage
+## Usage/Examples
 
 The Imager Service provides the following API endpoints:
 
 ### Upload Imager Post
-- **Endpoint**: `POST /imager/upload`
-- **Request Body**:
-  - `data`: JSON string containing the post data
-  - `image`: Multipart file containing the image
-- **Response**: String message indicating the successful upload
+**Endpoint:** `POST /imager/upload`
+**Request Body:**
+- `data`: JSON string containing the post data
+- `image`: Multipart file containing the image
+**Response:** String message indicating the successful upload
 
 ### Get Imager Post
-- **Endpoint**: `GET /imager/post`
-- **Request Parameters**:
-  - `id`: The ID of the post to retrieve
-- **Response**: `ImagerPostDTO` object representing the post
+**Endpoint:** `GET /imager/post`
+**Request Parameters:**
+- `id`: The ID of the post to retrieve
+**Response:** ImagerPostDTO object representing the post
 
 ### Get Imager Posts by Email
-- **Endpoint**: `GET /imager/posts`
-- **Request Parameters**:
-  - `email`: The email of the user to retrieve posts for
-- **Response**: List of `ImagerPostDTO` objects representing the posts
+**Endpoint:** `GET /imager/posts`
+**Request Parameters:**
+- `email`: The email of the user to retrieve posts for
+**Response:** List of ImagerPostDTO objects representing the posts
 
 ### Edit Imager Post
-- **Endpoint**: `PATCH /imager/edit`
-- **Request Body**:
-  - `id`: The ID of the post to edit
-  - `data`: (optional) JSON string containing the updated post data
-  - `image`: (optional) Multipart file containing the updated image
-- **Response**: `ImagerPostDTO` object representing the updated post
+**Endpoint:** `PATCH /imager/edit`
+**Request Body:**
+- `id`: The ID of the post to edit
+- `data`: (optional) JSON string containing the updated post data
+- `image`: (optional) Multipart file containing the updated image
+**Response:** ImagerPostDTO object representing the updated post
 
 ### Delete Imager Post
-- **Endpoint**: `DELETE /imager/delete`
-- **Request Parameters**:
-  - `id`: The ID of the post to delete
-- **Response**: String message indicating the successful deletion
+**Endpoint:** `DELETE /imager/delete`
+**Request Parameters:**
+- `id`: The ID of the post to delete
+**Response:** String message indicating the successful deletion
 
-## API
+## API Reference
 
 The Imager Service exposes the following API:
-
 - `POST /imager/upload`: Uploads a new Imager post
 - `GET /imager/post`: Retrieves an Imager post by ID
 - `GET /imager/posts`: Retrieves Imager posts by user email
 - `PATCH /imager/edit`: Edits an existing Imager post
 - `DELETE /imager/delete`: Deletes an Imager post by ID
 
-## Contributing
-
-To contribute to the Imager Service, follow these steps:
-
-1. Fork the repository
-2. Create a new branch for your feature or bug fix
-3. Implement your changes
-4. Write unit tests for your changes
-5. Submit a pull request
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
-
-## Testing
+## Running Tests
 
 To run the unit tests for the Imager Service, execute the following command:
 
-```
+```bash
 mvn test
 ```
+This will run the ImagerServiceApplicationTests and ImagerPostServiceTest classes.
 
-This will run the `ImagerServiceApplicationTests` and `ImagerPostServiceTest` classes.
+## Support
+
+For any issues or inquiries, please reach out to the repository owner or create an issue in the GitHub repository.
