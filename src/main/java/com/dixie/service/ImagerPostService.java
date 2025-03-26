@@ -44,7 +44,7 @@ public class ImagerPostService implements PostService {
     private final ImagerPostRepository imagerPostRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ImagerPostMapper mapper;
-    private final Gson jsonParser = new Gson();
+    private final Gson gson;
     private final Validator validator;
 
     private CompletableFuture<String> responseFromIdService;
@@ -67,7 +67,7 @@ public class ImagerPostService implements PostService {
     private ImagerPost buildImagerPost(@NonNull String imagerPostDataJson,
                                        @NonNull MultipartFile image) throws IOException, URISyntaxException, ExecutionException, InterruptedException {
 
-        responseFromIdService = new CompletableFuture<>();
+        this.responseFromIdService = new CompletableFuture<>();
         kafkaTemplate.send(SEND_TO_TOPIC_NAME, MESSAGE);
         log.info("BuildImagerPost | Request to ID-Service, topic:{}, message:{}", SEND_TO_TOPIC_NAME, MESSAGE);
 
@@ -89,7 +89,7 @@ public class ImagerPostService implements PostService {
     }
 
     private ImagerPostUploadData parseFromJson(String json) {
-        var imagerPostUploadData = jsonParser.fromJson(json, ImagerPostUploadData.class);
+        var imagerPostUploadData = gson.fromJson(json, ImagerPostUploadData.class);
         var errors = validator.validateObject(imagerPostUploadData).getAllErrors();
         if (!errors.isEmpty()) {
             String message = errors.stream()
