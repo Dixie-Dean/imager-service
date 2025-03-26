@@ -2,8 +2,6 @@
 
 The Imager Service is a web service that allows users to upload, retrieve, edit, and delete images and associated posts.
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/Dixie-Dean/imager-service/actions)
-
 ## Installation
 
 Clone the repository:
