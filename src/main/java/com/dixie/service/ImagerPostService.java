@@ -11,11 +11,13 @@ import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.Validator;
@@ -25,10 +27,13 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -47,45 +52,62 @@ public class ImagerPostService implements PostService {
     private final Gson gson;
     private final Validator validator;
 
-    private CompletableFuture<String> responseFromIdService;
+    private final ConcurrentHashMap<String, CompletableFuture<String>> pending = new ConcurrentHashMap<>();
 
     @KafkaListener(topics = LISTEN_TO_TOPIC_NAME, groupId = "imager")
-    public void getUniqueId(String id) {
-        log.info("GetUniqueID | ID:{}, topic:{}", id, LISTEN_TO_TOPIC_NAME);
-        responseFromIdService.complete(id);
+    public void getUniqueId(String id, @Header("correlationID") String correlationID) {
+        log.info("GetUniqueID | PostID:{}, CorrelationID{}, topic:{}", id, correlationID, LISTEN_TO_TOPIC_NAME);
+
+        //TODO: edd exception handling
+        var future = pending.remove(correlationID);
+        if (future != null) {
+            future.complete(id);
+        }
     }
 
     @Override
-    public String uploadImagerPost(String imagerPostUploadDataJson, MultipartFile image) throws URISyntaxException, IOException, ExecutionException, InterruptedException {
+    public CompletableFuture<String> uploadImagerPost(String imagerPostUploadDataJson, MultipartFile image) {
         log.info("UploadImagerPost | JSON:{}, Image:{}", imagerPostUploadDataJson, image);
-        var imagerPost = buildImagerPost(imagerPostUploadDataJson, image);
-        log.info("ImagerPost to persist:{}", imagerPost);
-        imagerPostRepository.saveImagerPost(imagerPost);
-        return "Post saved successfully! [ID:%s]".formatted(imagerPost.getId());
+        var responseFromIdService = requestPostID();
+        return responseFromIdService
+                .thenApply(postID ->
+                        buildImagerPost(imagerPostUploadDataJson, image, postID))
+                .thenApply(imagerPost -> {
+                    imagerPostRepository.saveImagerPost(imagerPost);
+                    return "Post saved successfully! [ID:%s]".formatted(imagerPost.getId());
+                });
     }
 
-    private ImagerPost buildImagerPost(@NonNull String imagerPostDataJson,
-                                       @NonNull MultipartFile image) throws IOException, URISyntaxException, ExecutionException, InterruptedException {
+    private CompletableFuture<String> requestPostID() {
+        var correlationID = UUID.randomUUID().toString();
+        var responseFromIdService = new CompletableFuture<String>();
+        pending.put(correlationID, responseFromIdService);
+        ProducerRecord<String, String> record = new ProducerRecord<>(SEND_TO_TOPIC_NAME, MESSAGE);
+        record.headers().add("correlationID", correlationID.getBytes(StandardCharsets.UTF_8));
+        kafkaTemplate.send(record);
+        log.info("uploadImagerPost | Request to ID-Service, topic:{}, message:{}", SEND_TO_TOPIC_NAME, MESSAGE);
+        return responseFromIdService;
+    }
 
-        this.responseFromIdService = new CompletableFuture<>();
-        kafkaTemplate.send(SEND_TO_TOPIC_NAME, MESSAGE);
-        log.info("BuildImagerPost | Request to ID-Service, topic:{}, message:{}", SEND_TO_TOPIC_NAME, MESSAGE);
-
+    private ImagerPost buildImagerPost(@NonNull String imagerPostDataJson, @NonNull MultipartFile image, @NonNull String postID) {
         var imagerPostUploadData = parseFromJson(imagerPostDataJson);
         var creationDateTime = LocalDateTime.now();
         var expirationDateTime = creationDateTime.plusMinutes(imagerPostUploadData.getTtl());
-        var postID = responseFromIdService.get();
-        var url = buildURL(postID);
 
-        return ImagerPost.builder()
-                .id(postID)
-                .user(imagerPostUploadData.getEmail())
-                .image(image.getBytes())
-                .message(imagerPostUploadData.getMessage())
-                .creationTime(creationDateTime)
-                .expirationTime(expirationDateTime)
-                .link(url)
-                .build();
+        try {
+            var url = buildURL(postID);
+            return ImagerPost.builder()
+                    .id(postID)
+                    .user(imagerPostUploadData.getEmail())
+                    .image(image.getBytes())
+                    .message(imagerPostUploadData.getMessage())
+                    .creationTime(creationDateTime)
+                    .expirationTime(expirationDateTime)
+                    .link(url)
+                    .build();
+        } catch (IOException | URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private ImagerPostUploadData parseFromJson(String json) {
