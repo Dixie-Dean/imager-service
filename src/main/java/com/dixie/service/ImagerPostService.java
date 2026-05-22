@@ -9,7 +9,6 @@ import com.dixie.model.entity.ImagerPost;
 import com.dixie.repository.ImagerPostRepository;
 import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -34,10 +33,8 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ImagerPostService implements PostService {
@@ -56,9 +53,6 @@ public class ImagerPostService implements PostService {
 
     @KafkaListener(topics = LISTEN_TO_TOPIC_NAME, groupId = "imager")
     public void getUniqueId(String id, @Header("correlationID") String correlationID) {
-        log.info("GetUniqueID | PostID:{}, CorrelationID{}, topic:{}", id, correlationID, LISTEN_TO_TOPIC_NAME);
-
-        //TODO: edd exception handling
         var future = pending.remove(correlationID);
         if (future != null) {
             future.complete(id);
@@ -67,7 +61,6 @@ public class ImagerPostService implements PostService {
 
     @Override
     public CompletableFuture<String> uploadImagerPost(String imagerPostUploadDataJson, MultipartFile image) {
-        log.info("UploadImagerPost | JSON:{}, Image:{}", imagerPostUploadDataJson, image);
         var responseFromIdService = requestPostID();
         return responseFromIdService
                 .thenApply(postID ->
@@ -85,7 +78,6 @@ public class ImagerPostService implements PostService {
         ProducerRecord<String, String> record = new ProducerRecord<>(SEND_TO_TOPIC_NAME, MESSAGE);
         record.headers().add("correlationID", correlationID.getBytes(StandardCharsets.UTF_8));
         kafkaTemplate.send(record);
-        log.info("uploadImagerPost | Request to ID-Service, topic:{}, message:{}", SEND_TO_TOPIC_NAME, MESSAGE);
         return responseFromIdService;
     }
 
@@ -117,7 +109,6 @@ public class ImagerPostService implements PostService {
             String message = errors.stream()
                     .map(DefaultMessageSourceResolvable::getDefaultMessage)
                     .collect(Collectors.joining("\n"));
-            log.error("ParseFromJson | message:{}", message);
             throw new ImagerPostValidationException(message);
         }
         return imagerPostUploadData;
@@ -135,34 +126,26 @@ public class ImagerPostService implements PostService {
 
     @Override
     public ImagerPostDTO getImagerPost(String id) throws ImagerPostNotFoundException {
-        log.info("GetImagerPost | ID:{}", id);
         var optional = imagerPostRepository.getImagerPost(id);
-        var imagerPost = mapper.toDTO(optional.orElseThrow(ImagerPostNotFoundException::new));
-        log.info("GetImagerPost | ImagerPost:{}", imagerPost);
-        return imagerPost;
+        return mapper.toDTO(optional.orElseThrow(ImagerPostNotFoundException::new));
     }
 
     @Override
     public List<ImagerPostDTO> getImagerPostsByEmail(String email) throws ImagerPostNotFoundException {
-        log.info("GetImagerPostsByEmail | Username:{}", email);
         var optional = imagerPostRepository.getImagerPostsByEmail(email);
-        var posts = optional
+        return optional
                 .orElseThrow(ImagerPostNotFoundException::new)
                 .stream().map(mapper::toDTO).toList();
-        log.info("GetImagerPostsByEmail | DTOs:{}", posts);
-        return posts;
     }
 
     @Override
     public ImagerPostDTO editImagerPost(@NonNull String id,
                                         @Nullable String payloadJson,
                                         @Nullable MultipartFile image) throws ImagerPostNotFoundException, IOException {
-        log.info("EditImagerPost | ID:{}, JSON:{}, Image:{}", id, payloadJson, image);
         var payload = parseFromJson(payloadJson);
         var entity = imagerPostRepository.getImagerPost(id)
                 .orElseThrow(ImagerPostNotFoundException::new);
         var updatedEntity = updateEntity(entity, payload, image);
-        log.info("EditImagerPost | Old:{}, Updated:{}", entity, updatedEntity);
         var optional = imagerPostRepository.editImagerPost(updatedEntity);
         return optional
                 .map(mapper::toDTO)
@@ -187,16 +170,14 @@ public class ImagerPostService implements PostService {
 
     @Override
     public String deleteImagerPost(String id) throws ImagerPostNotFoundException {
-        log.info("DeleteImagerPost | ID:{}", id);
         var imagerPost = imagerPostRepository.getImagerPost(id)
                 .orElseThrow(ImagerPostNotFoundException::new);
-        log.info("DeleteImagerPost | ImagerPost:{}", imagerPost);
         imagerPostRepository.deleteImagerPost(imagerPost);
         return "Post removed successfully [ID:%s]".formatted(id);
     }
 
     @Scheduled(fixedRate = 5000)
-    private void deleteExpiredImagerPosts() {
+    void deleteExpiredImagerPosts() {
         imagerPostRepository.deleteExpiredImagerPosts();
     }
 }
